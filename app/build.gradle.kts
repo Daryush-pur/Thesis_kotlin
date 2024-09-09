@@ -1,9 +1,14 @@
+
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+//    alias(libs.plugins.android.application)
+//    alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
 }
 
 android {
+
     namespace = "com.daryush.thesis"
     compileSdk = 34
 
@@ -29,6 +34,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        apply(plugin = "kotlin-kapt")
+        apply(plugin = "kotlin-android")
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -56,4 +63,12 @@ dependencies {
     implementation(libs.core.v341)
 
 
+//    val room_version = "2.6.1"
+//    implementation("androidx.room:room-runtime:$room_version")
+//    annotationProcessor("androidx.room:room-compiler:$room_version")
+
+
+    implementation ("androidx.room:room-runtime:2.6.1")
+    kapt ("androidx.room:room-compiler:2.6.1")
+    implementation ("androidx.room:room-ktx:2.6.1")
 }

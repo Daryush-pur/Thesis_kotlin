@@ -1,74 +1,87 @@
+@file:Suppress("DEPRECATION")
+
 package com.daryush.thesis
 
-
-
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.zxing.integration.android.IntentIntegrator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@Suppress("DEPRECATION")
 class ScanPage : AppCompatActivity() {
 
-    private var btn_Start:Button?= null
-    private var txt_Result: TextView?= null
-
-
+    private var btnStart: Button? = null
+    private var txtResult: TextView? = null
+    private var newToTp: ToTpDataBase? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_scan_page)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
+        newToTp = ToTpDataBase.getAppDatabase(this)
+        btnStart = findViewById(R.id.btn_Start)
+        txtResult = findViewById(R.id.txt_Result)
+
         val requestCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             if (it) {
-                startQRCodeScan() // Start scanning when permission is granted
-                Toast.makeText(this," done",Toast.LENGTH_SHORT).show()
+                startQRCodeScan()
             } else {
                 Toast.makeText(applicationContext, "Permission not granted", Toast.LENGTH_SHORT).show()
             }
         }
-        btn_Start = findViewById(R.id.btn_Start)
-        txt_Result = findViewById(R.id.txt_Result)
 
-        btn_Start?.setOnClickListener {
-            requestCamera.launch(android.Manifest.permission.CAMERA)
+        btnStart?.setOnClickListener {
+            val hasPermission = ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            if (hasPermission) {
+                startQRCodeScan()
+            } else {
+                requestCamera.launch(android.Manifest.permission.CAMERA)
+            }
         }
-
     }
 
     private fun startQRCodeScan() {
         val integrator = IntentIntegrator(this)
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE) // Scan only QR codes
-        integrator.setPrompt("Scan a QR Code") // Set a prompt message
-        integrator.initiateScan() // Start the scan
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+        integrator.setPrompt("Scan a QR Code")
+        integrator.initiateScan()
     }
 
-    // Handle the result of the scan
     @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)}\n      with the appropriate {@link ActivityResultContract} and handling the result in the\n      {@link ActivityResultCallback#onActivityResult(Object) callback}.")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        if (result != null) {
-            if (result.contents == null) {
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
-            } else {
-                txt_Result?.text = result.contents // Display the scanned QR code content
-            }
+        if (result != null && result.contents != null) {
+            val resultString = result.contents
+            val secret = resultString.substringAfter("secret=").substringBefore("&")
+            val issuer = resultString.substringAfter("issuer=")
+            val label = resultString.substringAfter("totp/").substringBefore("?secret")
+            insertToTp(ToTp(secret = secret, IssuerName = issuer, label = label))
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
+    private fun insertToTp(totp: ToTp) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                newToTp?.toTpDao()?.insert(totp)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ScanPage, "Insert successful", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ScanPage, "Insert failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 }
