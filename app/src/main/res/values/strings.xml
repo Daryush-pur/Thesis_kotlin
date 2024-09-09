@@ -8,4 +8,6 @@
     <string name="label">Label</string>
     <string name="issuer">Issuer</string>
     <string name="secret">Secret</string>
+    <string name="show">Show</string>
+    <string name="scan_qr_code">Scan Qr Code</string>
 </resources>

@@ -62,6 +62,10 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.core.v341)
 
+    implementation (libs.kotlinx.coroutines.core)
+    implementation (libs.kotlinx.coroutines.android)
+
+
 
 //    val room_version = "2.6.1"
 //    implementation("androidx.room:room-runtime:$room_version")
