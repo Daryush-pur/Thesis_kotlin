@@ -25,6 +25,7 @@ totpKt = "1.0.1"
 visionCommon = "17.3.0"
 playServicesMlkitBarcodeScanning = "18.3.1"
 zxingAndroidEmbedded = "4.3.0"
+firebaseCrashlyticsBuildtools = "3.0.2"
 
 [libraries]
 androidx-appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
@@ -53,6 +54,7 @@ totp-kt = { module = "dev.robinohs:totp-kt", version.ref = "totpKt" }
 vision-common = { group = "com.google.mlkit", name = "vision-common", version.ref = "visionCommon" }
 play-services-mlkit-barcode-scanning = { group = "com.google.android.gms", name = "play-services-mlkit-barcode-scanning", version.ref = "playServicesMlkitBarcodeScanning" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

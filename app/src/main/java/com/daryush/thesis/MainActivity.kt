@@ -11,9 +11,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import dev.turingcomplete.kotlinonetimepassword.HmacAlgorithm
+import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordConfig
+import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -43,9 +48,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         //button
-        btn_show?.setOnClickListener {
-            getData()
-        }
+//        btn_show?.setOnClickListener {
+//            getData()
+//        }
+
+        //refresh data
+        startAutoRefresh()
     }
 
     //show database
@@ -56,10 +64,22 @@ class MainActivity : AppCompatActivity() {
             val data = withContext(Dispatchers.IO) {
                 newToTp!!.toTpDao().getAll() // Fetch the data from the database
             }
+
             val rec = findViewById<RecyclerView>(R.id.rec)
             // Update the UI (RecyclerView) after the data is fetched
             rec.layoutManager = LinearLayoutManager(this@MainActivity)
             rec.adapter = RecyclerAdapter(data, this@MainActivity)
+        }
+    }
+
+
+    //refresh data
+    private fun startAutoRefresh() {
+        lifecycleScope.launch {
+            while (isActive) {
+                getData()
+                delay(30_000) // 30 seconds
+            }
         }
     }
 

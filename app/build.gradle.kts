@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.vision.common)
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation(libs.zxing.android.embedded)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,12 +67,13 @@ dependencies {
     implementation (libs.kotlinx.coroutines.android)
 
 
+    //totp
+    implementation("dev.turingcomplete:kotlin-onetimepassword:2.4.1")
 
+    //Database
 //    val room_version = "2.6.1"
 //    implementation("androidx.room:room-runtime:$room_version")
 //    annotationProcessor("androidx.room:room-compiler:$room_version")
-
-
     implementation ("androidx.room:room-runtime:2.6.1")
     kapt ("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
