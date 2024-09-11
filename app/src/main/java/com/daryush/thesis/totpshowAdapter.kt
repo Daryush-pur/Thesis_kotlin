@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Base32
+import dev.turingcomplete.kotlinonetimepassword.GoogleAuthenticator
 import dev.turingcomplete.kotlinonetimepassword.HmacAlgorithm
 import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordConfig
 import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordGenerator
@@ -49,18 +51,30 @@ class RecyclerAdapter(val items: List<ToTp>, val context: Context) :
         }
 
 
-        private fun totpGenerator(secret: String): String{
+        private fun totpGenerator(secret: String): String {
             //google authentication
-            val config = TimeBasedOneTimePasswordConfig(codeDigits = 8,
-                hmacAlgorithm = HmacAlgorithm.SHA1,
-                timeStep = 30,
-                timeStepUnit = TimeUnit.SECONDS)
-            val timeBasedOneTimePasswordGenerator = TimeBasedOneTimePasswordGenerator(secret.toByteArray(), config)
+//            val config = TimeBasedOneTimePasswordConfig(codeDigits = 6,
+//                hmacAlgorithm = HmacAlgorithm.SHA1,
+//                timeStep = 30,
+//                timeStepUnit = TimeUnit.SECONDS)
+//            val timeBasedOneTimePasswordGenerator = TimeBasedOneTimePasswordGenerator(secret.toByteArray(), config)
+//            return timeBasedOneTimePasswordGenerator.generate()
 
-            return timeBasedOneTimePasswordGenerator.generate()
+
+            //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            // Warning: the length of the plain text may be limited, see next chapter
+            //val plainTextSecret = secret.toByteArray(Charsets.UTF_8)
+
+            // This is the encoded one to use in most of the generators (Base32 is from the Apache commons codec library)
+            //val base32EncodedSecret = Base32().encodeToString(plainTextSecret)
+            val newSecret = secret.toByteArray()
+            val googleAuthenticator = GoogleAuthenticator(newSecret)
+            var code = googleAuthenticator.generate() // Will use System.currentTimeMillis()
+            return code.toString()
+
         }
-
-
-
     }
 }
+
+
