@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ProgressBar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private var btn_scan:Button?= null
     private var btn_show:Button?= null
+    private var progressBar:ProgressBar?= null
     private var newToTp: ToTpDataBase? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         newToTp = ToTpDataBase.getAppDatabase(this)
         btn_show = findViewById<Button>(R.id.btn_Show)
         btn_scan = findViewById<Button>(R.id.btn_Scan)
+        progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
 
         //button
@@ -81,7 +84,16 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 getData()
-                delay(30_000) // 30 seconds
+                for (i in 300 downTo 0) {
+                    progressBar!!.progress = i
+
+                    when (i) {
+                        in 100..300 -> progressBar!!.setProgressDrawableTiled(resources.getDrawable(R.drawable.progress_bar_normal))
+                        in 50..99 -> progressBar!!.setProgressDrawableTiled(resources.getDrawable(R.drawable.progress_bar_last_10_sec))
+                        in 0..49 -> progressBar!!.setProgressDrawableTiled(resources.getDrawable(R.drawable.progress_bar_last_5_sec))
+                    }
+                    delay(100) // 0.1 second
+                }
             }
         }
     }
