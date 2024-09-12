@@ -68,7 +68,10 @@ class MainActivity : AppCompatActivity() {
             val rec = findViewById<RecyclerView>(R.id.rec)
             // Update the UI (RecyclerView) after the data is fetched
             rec.layoutManager = LinearLayoutManager(this@MainActivity)
-            rec.adapter = RecyclerAdapter(data, this@MainActivity)
+            val newData = MutableList(data.size) { i -> data[i] }
+            val adapter = RecyclerAdapter(newData, this@MainActivity, newToTp!!, this@MainActivity)
+
+            rec.adapter = adapter
         }
     }
 
