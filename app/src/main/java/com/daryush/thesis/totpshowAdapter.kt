@@ -1,22 +1,29 @@
 package com.daryush.thesis
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Base32
 import dev.turingcomplete.kotlinonetimepassword.GoogleAuthenticator
-import dev.turingcomplete.kotlinonetimepassword.HmacAlgorithm
-import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordConfig
-import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordGenerator
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class RecyclerAdapter(val items: List<ToTp>, val context: Context) :
-    RecyclerView.Adapter<RecyclerAdapter.ViewHolder>() {
+
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+
+class RecyclerAdapter(
+    val items: MutableList<ToTp>,
+    val context: Context,
+    val database: ToTpDataBase,
+    val lifecycleOwner: LifecycleOwner
+) : RecyclerView.Adapter<RecyclerAdapter.ViewHolder>() {
 
     // Inflate the layout and return a ViewHolder object
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -35,8 +42,27 @@ class RecyclerAdapter(val items: List<ToTp>, val context: Context) :
         holder.bind(totp)
     }
 
+    // Method to delete an item from the database and update the list
+    private fun deleteItem(position: Int) {
+        val totp = items[position]
+        lifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                database.toTpDao().delete(totp)
+                withContext(Dispatchers.Main) {
+                    items.removeAt(position)
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position, items.size)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     // Inner ViewHolder class to hold item views
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View, val context: Context = itemView.context) : RecyclerView.ViewHolder(itemView) {
         private val secretTextView: TextView = itemView.findViewById(R.id.secret)
         private val issuerTextView: TextView = itemView.findViewById(R.id.issuer)
         private val labelTextView: TextView = itemView.findViewById(R.id.label)
@@ -48,33 +74,29 @@ class RecyclerAdapter(val items: List<ToTp>, val context: Context) :
             issuerTextView.text = totp.IssuerName
             labelTextView.text = totp.label
 
+            rowLayout.setOnLongClickListener {
+                AlertDialog.Builder(context).apply {
+                    setTitle("Delete Item")
+                    setMessage("Are you sure you want to delete this item?")
+                    setPositiveButton("Yes") { dialog, _ ->
+                        deleteItem(adapterPosition)
+                        dialog.dismiss()
+                    }
+                    setNegativeButton("No") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    create()
+                    show()
+                }
+                return@setOnLongClickListener true
+            }
         }
 
-
         private fun totpGenerator(secret: String): String {
-            //google authentication
-//            val config = TimeBasedOneTimePasswordConfig(codeDigits = 6,
-//                hmacAlgorithm = HmacAlgorithm.SHA1,
-//                timeStep = 30,
-//                timeStepUnit = TimeUnit.SECONDS)
-//            val timeBasedOneTimePasswordGenerator = TimeBasedOneTimePasswordGenerator(secret.toByteArray(), config)
-//            return timeBasedOneTimePasswordGenerator.generate()
-
-
-            //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // Warning: the length of the plain text may be limited, see next chapter
-            //val plainTextSecret = secret.toByteArray(Charsets.UTF_8)
-
-            // This is the encoded one to use in most of the generators (Base32 is from the Apache commons codec library)
-            //val base32EncodedSecret = Base32().encodeToString(plainTextSecret)
             val newSecret = secret.toByteArray()
             val googleAuthenticator = GoogleAuthenticator(newSecret)
-            var code = googleAuthenticator.generate() // Will use System.currentTimeMillis()
-            return code.toString()
-
+            val code = googleAuthenticator.generate()
+            return code
         }
     }
 }
-
-
